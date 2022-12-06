@@ -6,6 +6,8 @@ let mirror
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   mirror = new Line(width * 0.6, height * 0.25, width * 0.6, height * 0.75)
+
+  strokeWeight(4)
 }
 
 function draw() {
@@ -13,20 +15,19 @@ function draw() {
 
   const ln = new Line(width * 0.5, height * 0.5, mouseX, mouseY)
 
-  const intersection = findIntersection(ln, mirror)
+  const reflectionLines = getReflectionLines(ln, mirror)
 
-  ln.draw()
+  reflectionLines.forEach(ln => ln.draw())
   mirror.draw()
-
-  if (intersection) {
-    fill(255, 0, 0)
-    ellipse(intersection.x, intersection.y, 10, 10)
-  }
 }
 
 function Line(startX, startY, endX, endY) {
   this.start = createVector(startX, startY)
   this.end = createVector(endX, endY)
+
+  this.normal = () => {
+    return createVector(this.start, this.end).rotate(HALF_PI)
+  }
 
   this.interpolate = t => {
     return p5.Vector.lerp(this.start, this.end, t)
@@ -35,6 +36,29 @@ function Line(startX, startY, endX, endY) {
   this.draw = () => {
     line(this.start.x, this.start.y, this.end.x, this.end.y)
   }
+}
+
+function getReflectionLines(sightLine, mirror) {
+  const lines = [sightLine]
+
+  const intersection = findIntersection(sightLine, mirror)
+
+  if (!intersection) {
+    return lines
+  }
+
+  // Temporary line to get the normal, this should be based on the mirror
+  const reflectionNormal = createVector(1, 0)
+  const reflection = p5.Vector.sub(sightLine.end, intersection).reflect(
+    reflectionNormal,
+  )
+  const start = intersection
+  const end = p5.Vector.add(intersection, reflection)
+  const ln = new Line(start.x, start.y, end.x, end.y)
+
+  lines.push(ln)
+
+  return lines
 }
 
 // Adapted from
