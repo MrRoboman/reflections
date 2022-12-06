@@ -1,30 +1,46 @@
 const CANVAS_WIDTH = 600
 const CANVAS_HEIGHT = 600
 
+let mirror
 let ln
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
-  ln = new Line(4)
+  mirror = new Line({
+    points: [
+      createVector(width * 0.25, 10),
+      createVector(width * 0.25, height - 10),
+    ],
+    weight: 2,
+  })
+  ln = new Line({ weight: 4 })
 }
 
 function draw() {
   background(100)
-  ln.draw([createVector(width / 2, height / 2), createVector(mouseX, mouseY)])
+
+  ln.points = [
+    createVector(width / 2, height / 2),
+    createVector(mouseX, mouseY),
+  ]
+
+  ln.draw()
+  mirror.draw()
 }
 
-function Line(strokeWidth) {
-  this.strokeWidth = strokeWidth
+function Line({ points, weight }) {
+  this.points = points || []
+  this.weight = weight
 
-  this.draw = points => {
-    if (points.length < 2) {
+  this.draw = () => {
+    if (this.points.length < 2) {
       return
     }
 
-    strokeWeight(this.strokeWidth)
-    for (let i = 0; i < points.length - 1; i++) {
-      const from = points[i]
-      const to = points[i + 1]
+    strokeWeight(this.weight)
+    for (let i = 0; i < this.points.length - 1; i++) {
+      const from = this.points[i]
+      const to = this.points[i + 1]
       line(from.x, from.y, to.x, to.y)
     }
   }
