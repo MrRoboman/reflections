@@ -8,6 +8,8 @@ const OBJECT_BOUNDARIES = {
   bottom: CANVAS_HEIGHT * 0.5,
 }
 
+const MAX_REFLECTIONS = 2
+
 let obj
 let mirrors
 let objs
@@ -17,7 +19,7 @@ function setup() {
   rectMode(CENTER)
 
   mirrors = [
-    // new Line(width * 0.4, height * 0.1, width * 0.4, height * 0.5),
+    new Line(width * 0.4, height * 0.1, width * 0.4, height * 0.5),
     new Line(width * 0.6, height * 0.1, width * 0.6, height * 0.5),
   ]
 
@@ -60,7 +62,17 @@ function mouseReleased() {
   objs.forEach(o => o.unClick())
 }
 
-function DraggableObject(x, y, w, h, left, right, top, bottom, isReversedX) {
+function DraggableObject(
+  x,
+  y,
+  w,
+  h,
+  left,
+  right,
+  top,
+  bottom,
+  reflectionIndex = 0,
+) {
   this.x = x
   this.y = y
   this.w = w
@@ -68,7 +80,7 @@ function DraggableObject(x, y, w, h, left, right, top, bottom, isReversedX) {
 
   this.boundaries = { left, right, top, bottom }
 
-  this.isReversedX = isReversedX
+  this.reflectionIndex = reflectionIndex
 
   this.dragging = false
   this.offsetX = 0
@@ -144,13 +156,21 @@ function Line(startX, startY, endX, endY) {
 function updateOtherObjects(obj) {
   objs.forEach(o => {
     if (o !== obj) {
-      if (
-        (o.isReversedX && !obj.isReversedX) ||
-        (!o.isReversedX && obj.isReversedX)
-      ) {
-        o.x = o.boundaries.right - (obj.x - obj.boundaries.left)
+      const boundaryWidth = OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left
+      const oReversed = Math.abs(o.reflectionIndex) % 2 === 1
+      const objReversed = Math.abs(obj.reflectionIndex) % 2 === 1
+      const offset =
+        o.reflectionIndex > 0 ? o.reflectionIndex - 1 : o.reflectionIndex + 1
+      if ((oReversed && !objReversed) || (!oReversed && objReversed)) {
+        o.x =
+          o.boundaries.right -
+          (obj.x - obj.boundaries.left) +
+          boundaryWidth * offset
       } else {
-        o.x = o.boundaries.left + (obj.x - obj.boundaries.left)
+        o.x =
+          o.boundaries.left +
+          (obj.x - obj.boundaries.left) +
+          boundaryWidth * offset
       }
       o.y = obj.y
     }
@@ -171,20 +191,49 @@ function generateObjects(x, y, w, h, mirrors) {
 
   objs = [obj]
 
-  const mirror = mirrors[0]
-  const obj2 = new DraggableObject(
-    mirror.start.x + (mirror.start.x - obj.x),
-    obj.y,
-    w,
-    h,
-    mirror.start.x,
-    mirror.start.x + (OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left),
-    OBJECT_BOUNDARIES.top,
-    OBJECT_BOUNDARIES.bottom,
-    true,
-  )
+  if (mirrors.length === 1) {
+    const mirror = mirrors[0]
+    const obj2 = new DraggableObject(
+      mirror.start.x + (mirror.start.x - obj.x),
+      obj.y,
+      w,
+      h,
+      mirror.start.x,
+      mirror.start.x + (OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left),
+      OBJECT_BOUNDARIES.top,
+      OBJECT_BOUNDARIES.bottom,
+      true,
+    )
 
-  objs.push(obj2)
+    objs.push(obj2)
+  }
+
+  if (mirrors.length === 2) {
+    mirrors.forEach(mirror => {
+      const direction = mirror.start.x < obj.x ? -1 : 1
+      const boundaryWidth = OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left
+      let mirrorX = mirror.start.x
+
+      for (let i = 0; i < MAX_REFLECTIONS; i++) {
+        const left = OBJECT_BOUNDARIES.left + boundaryWidth * direction
+        const obj2 = new DraggableObject(
+          obj.x + boundaryWidth * direction * (i + 1),
+          obj.y,
+          w,
+          h,
+          left,
+          left + boundaryWidth,
+          OBJECT_BOUNDARIES.top,
+          OBJECT_BOUNDARIES.bottom,
+          (i + 1) * direction,
+        )
+
+        objs.push(obj2)
+
+        mirrorX += boundaryWidth * direction
+      }
+    })
+  }
 }
 
 function getReflectionLines(sightLine, mirrors, ignoreMirror) {
@@ -246,7 +295,6 @@ function findIntersection(lineA, lineB) {
     const ub = nb / denom
 
     if (ua >= 0.0 && ua <= 1.0 && ub >= 0.0 && ub <= 1.0) {
-      console.log('fart')
       return lineA.interpolate(ua)
     }
   }
