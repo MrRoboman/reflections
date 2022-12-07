@@ -4,12 +4,18 @@ const CANVAS_HEIGHT = 800
 const ROOM_WIDTH = 100
 const ROOM_HEIGHT = 100
 
+const LIGHT_FALLOFF = 0.7
+
 let item
 // let rooms = [0]
 // let rooms = [0, 1]
-let rooms = [-2, -1, 0, 1, 2]
+// let rooms = [-2, -1, 0, 1, 2]
 // let rooms = [-3, -2, -1, 0, 1, 2, 3]
-// let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+
+function getAlpha(roomIdx) {
+  return 255 * Math.pow(LIGHT_FALLOFF, Math.abs(roomIdx))
+}
 
 function drawRooms() {
   // Draw floors
@@ -20,7 +26,7 @@ function drawRooms() {
     const roomX = centerX + roomIdx * ROOM_WIDTH
     const roomY = centerY
     noStroke()
-    fill(255, 0, 0)
+    fill(255, 0, 0, getAlpha(roomIdx))
     rect(roomX, roomY, ROOM_WIDTH, ROOM_HEIGHT)
     if (i < rooms.length - 1) {
       stroke(0)
@@ -145,8 +151,9 @@ function ReflectionObject(x, y, w, h) {
 
   this.draw = () => {
     rooms.forEach(roomIdx => {
-      stroke(0)
-      fill(255)
+      const alpha = getAlpha(roomIdx)
+      stroke(0, 0, 0, alpha)
+      fill(255, 255, 255, alpha)
       const shouldReflectX = Math.abs(roomIdx) % 2 === 1
       let x = this.x + ROOM_WIDTH * roomIdx
       if (shouldReflectX) {
