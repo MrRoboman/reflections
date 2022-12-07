@@ -1,92 +1,92 @@
 const CANVAS_WIDTH = 800
-const CANVAS_HEIGHT = 800
+const CANVAS_HEIGHT = 400
 
-const ROOM_WIDTH = 100
-const ROOM_HEIGHT = 100
+const ROOM_W = 150
+const ROOM_H = 200
+const ROOM_X = CANVAS_WIDTH * 0.5
+const ROOM_Y = ROOM_H * 0.5
 
-const LIGHT_FALLOFF = 0.7
+const ROOM_LEFT = ROOM_X - ROOM_W * 0.5
+const ROOM_RIGHT = ROOM_X + ROOM_W * 0.5
+const ROOM_TOP = ROOM_Y - ROOM_H * 0.5
+const ROOM_BOTTOM = ROOM_Y + ROOM_H * 0.5
+
+const EYE_BALL_SIZE = 40
+const EYE_IRIS_SIZE = 16
+const EYE_PUPIL_SIZE = 6
+const EYE_COLOR = '#228b22'
+const EYE_MAX_MOUSE_DISTANCE = 100
+
+const LIGHT_FALLOFF = 0.75
 
 let item
 // let rooms = [0]
 // let rooms = [0, 1]
 // let rooms = [-2, -1, 0, 1, 2]
-// let rooms = [-3, -2, -1, 0, 1, 2, 3]
-let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-
-function getAlpha(roomIdx) {
-  return 255 * Math.pow(LIGHT_FALLOFF, Math.abs(roomIdx))
-}
-
-function drawRooms() {
-  // Draw floors
-  for (let i = 0; i < rooms.length; i++) {
-    const roomIdx = rooms[i]
-    const centerX = width * 0.5
-    const centerY = height * 0.5
-    const roomX = centerX + roomIdx * ROOM_WIDTH
-    const roomY = centerY
-    noStroke()
-    fill(255, 0, 0, getAlpha(roomIdx))
-    rect(roomX, roomY, ROOM_WIDTH, ROOM_HEIGHT)
-    if (i < rooms.length - 1) {
-      stroke(0)
-      line(
-        roomX + ROOM_WIDTH / 2,
-        roomY - ROOM_HEIGHT / 2,
-        roomX + ROOM_WIDTH / 2,
-        roomY + ROOM_HEIGHT / 2,
-      )
-    }
-  }
-
-  // Draw mirrors
-  for (let i = 0; i < rooms.length; i++) {
-    const roomIdx = rooms[i]
-    const centerX = width * 0.5
-    const centerY = height * 0.5
-    const roomX = centerX + roomIdx * ROOM_WIDTH
-    const roomY = centerY
-    if (i < rooms.length - 1) {
-      stroke(0)
-      line(
-        roomX + ROOM_WIDTH / 2,
-        roomY - ROOM_HEIGHT / 2,
-        roomX + ROOM_WIDTH / 2,
-        roomY + ROOM_HEIGHT / 2,
-      )
-    }
-  }
-}
+let rooms = [-3, -2, -1, 0, 1, 2, 3]
+// let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+// let rooms = [
+//   -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+// ]
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
 
-  item = new ReflectionObject(width * 0.5, height * 0.5, 10, 10)
+  item = new ReflectionObject(ROOM_X, ROOM_Y, 10, 10)
 }
 
 function draw() {
+  strokeWeight(2)
   item.update()
 
   background(100)
 
-  const ln = new Line(
-    width * 0.5,
-    height * 0.5 + ROOM_HEIGHT * 0.5,
-    mouseX,
-    mouseY,
-  )
+  const ln = new Line(ROOM_X, ROOM_Y + ROOM_H * 0.5, mouseX, mouseY)
 
   const reflectionLines = getReflectionLines(ln, getMirrors())
 
   drawRooms()
   item.draw()
 
+  strokeWeight(4)
+  stroke(0, 0, 0, 255)
+
   drawingContext.setLineDash([10])
   ln.draw()
 
   drawingContext.setLineDash([])
   reflectionLines.forEach(ln => ln.draw())
+
+  drawEye()
+}
+
+function drawEye() {
+  const mousePosition = createVector(mouseX, mouseY)
+  const eyePosition = createVector(ROOM_X, ROOM_Y + ROOM_H / 2)
+  const eyeToMouse = p5.Vector.sub(mousePosition, eyePosition)
+  const eyeToMouseDirection = eyeToMouse.normalize()
+  const eyeToMouseDistance = eyePosition.dist(mousePosition)
+  let distancePercentage = eyeToMouseDistance / EYE_MAX_MOUSE_DISTANCE
+  distancePercentage = Math.min(distancePercentage, 1)
+  const pupilPosition = p5.Vector.add(
+    eyePosition,
+    eyeToMouseDirection.mult(
+      (EYE_BALL_SIZE / 2 - EYE_IRIS_SIZE / 2 - 4) * distancePercentage,
+    ),
+  )
+
+  stroke(0)
+  fill(255)
+  circle(ROOM_X, ROOM_Y + ROOM_H / 2, EYE_BALL_SIZE)
+
+  noStroke()
+  fill(EYE_COLOR)
+  circle(pupilPosition.x, pupilPosition.y, EYE_IRIS_SIZE)
+
+  noStroke()
+  fill(0)
+  circle(pupilPosition.x, pupilPosition.y, EYE_PUPIL_SIZE)
 }
 
 function mousePressed() {
@@ -126,25 +126,20 @@ function ReflectionObject(x, y, w, h) {
 
   this.update = () => {
     if (this.dragging) {
-      const centerRoomLeft = width / 2 - ROOM_WIDTH / 2
-      const centerRoomRight = width / 2 + ROOM_WIDTH / 2
-      const centerRoomTop = height / 2 - ROOM_HEIGHT / 2
-      const centerRoomBottom = height / 2 + ROOM_HEIGHT / 2
-
       this.x = mouseX + this.offsetX
       this.y = mouseY + this.offsetY
 
-      if (this.x - this.w / 2 < centerRoomLeft) {
-        this.x = centerRoomLeft + this.w / 2
+      if (this.x - this.w / 2 < ROOM_LEFT) {
+        this.x = ROOM_LEFT + this.w / 2
       }
-      if (this.x + this.w / 2 > centerRoomRight) {
-        this.x = centerRoomRight - this.w / 2
+      if (this.x + this.w / 2 > ROOM_RIGHT) {
+        this.x = ROOM_RIGHT - this.w / 2
       }
-      if (this.y - this.h / 2 < centerRoomTop) {
-        this.y = centerRoomTop + this.h / 2
+      if (this.y - this.h / 2 < ROOM_TOP) {
+        this.y = ROOM_TOP + this.h / 2
       }
-      if (this.y + this.h / 2 > centerRoomBottom) {
-        this.y = centerRoomBottom - this.h / 2
+      if (this.y + this.h / 2 > ROOM_BOTTOM) {
+        this.y = ROOM_BOTTOM - this.h / 2
       }
     }
   }
@@ -155,7 +150,7 @@ function ReflectionObject(x, y, w, h) {
       stroke(0, 0, 0, alpha)
       fill(255, 255, 255, alpha)
       const shouldReflectX = Math.abs(roomIdx) % 2 === 1
-      let x = this.x + ROOM_WIDTH * roomIdx
+      let x = this.x + ROOM_W * roomIdx
       if (shouldReflectX) {
         x += (width / 2 - this.x) * 2
       }
@@ -181,25 +176,68 @@ function Line(startX, startY, endX, endY) {
   }
 }
 
+function getAlpha(roomIdx) {
+  return 255 * Math.pow(LIGHT_FALLOFF, Math.abs(roomIdx))
+}
+
+function drawRooms() {
+  // Draw floors
+  for (let i = 0; i < rooms.length; i++) {
+    const roomIdx = rooms[i]
+    const roomX = ROOM_X + ROOM_W * roomIdx
+
+    noStroke()
+    fill(255, 0, 0, getAlpha(roomIdx))
+
+    rect(roomX, ROOM_Y, ROOM_W, ROOM_H)
+
+    if (i < rooms.length - 1) {
+      stroke(0)
+      line(
+        roomX + ROOM_W / 2,
+        ROOM_Y - ROOM_H / 2,
+        roomX + ROOM_W / 2,
+        ROOM_Y + ROOM_H / 2,
+      )
+    }
+  }
+
+  // Draw mirrors
+  for (let i = 0; i < rooms.length; i++) {
+    const roomIdx = rooms[i]
+    const roomX = ROOM_X + ROOM_W * roomIdx
+
+    if (i < rooms.length - 1) {
+      stroke(0)
+      line(
+        roomX + ROOM_W / 2,
+        ROOM_Y - ROOM_H / 2,
+        roomX + ROOM_W / 2,
+        ROOM_Y + ROOM_H / 2,
+      )
+    }
+  }
+}
+
 function getMirrors() {
   let mirrors = []
   if (rooms.includes(-1)) {
     mirrors.push(
       new Line(
-        width * 0.5 - ROOM_WIDTH / 2,
-        height * 0.5 - ROOM_HEIGHT / 2,
-        width * 0.5 - ROOM_WIDTH / 2,
-        height * 0.5 + ROOM_HEIGHT / 2,
+        ROOM_X - ROOM_W / 2,
+        ROOM_Y - ROOM_H / 2,
+        ROOM_X - ROOM_W / 2,
+        ROOM_Y + ROOM_H / 2,
       ),
     )
   }
   if (rooms.includes(1)) {
     mirrors.push(
       new Line(
-        width * 0.5 + ROOM_WIDTH / 2,
-        height * 0.5 - ROOM_HEIGHT / 2,
-        width * 0.5 + ROOM_WIDTH / 2,
-        height * 0.5 + ROOM_HEIGHT / 2,
+        ROOM_X + ROOM_W / 2,
+        ROOM_Y - ROOM_H / 2,
+        ROOM_X + ROOM_W / 2,
+        ROOM_Y + ROOM_H / 2,
       ),
     )
   }
