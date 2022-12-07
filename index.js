@@ -20,7 +20,12 @@ function draw() {
 
   const reflectionLines = getReflectionLines(ln, mirrors)
 
+  drawingContext.setLineDash([10])
+  ln.draw()
+
+  drawingContext.setLineDash([])
   reflectionLines.forEach(ln => ln.draw())
+
   mirrors.forEach(m => m.draw())
 }
 
