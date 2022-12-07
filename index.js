@@ -2,7 +2,7 @@ const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 400
 
 const ROOM_W = 150
-const ROOM_H = 200
+const ROOM_H = 300
 const ROOM_X = CANVAS_WIDTH * 0.5
 const ROOM_Y = ROOM_H * 0.5
 
@@ -17,13 +17,43 @@ const EYE_PUPIL_SIZE = 6
 const EYE_COLOR = '#228b22'
 const EYE_MAX_MOUSE_DISTANCE = 100
 
+const START_BUTTON_X = CANVAS_WIDTH * 0.5
+const START_BUTTON_Y = CANVAS_HEIGHT - 55
+const START_BUTTON_W = 100
+const START_BUTTON_H = 30
+
 const LIGHT_FALLOFF = 0.75
 
+let currentState = 0
+const states = [
+  {
+    prompt: "Let's learn about reflection!",
+    startButtonVisible: true,
+    sightLineVisible: false,
+    pupilPosition: null,
+    toGetToNextState: 'clickStartButton',
+  },
+  {
+    prompt: 'Look at the triangle in the middle of the room.',
+    startButtonVisible: false,
+    sightLineVisible: true,
+    pupilPosition: null,
+    toGetToNextState: 'clickTriangle',
+  },
+  {
+    prompt: 'Great! Light reflects off the triangle into the eye.',
+    startButtonVisible: false,
+    sightLineVisible: false,
+    pupilPosition: { x: 0, y: -1 },
+    toGetToNextState: 'none',
+  },
+]
+
 let item
-// let rooms = [0]
+let rooms = [0]
 // let rooms = [0, 1]
 // let rooms = [-2, -1, 0, 1, 2]
-let rooms = [-3, -2, -1, 0, 1, 2, 3]
+// let rooms = [-3, -2, -1, 0, 1, 2, 3]
 // let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
 // let rooms = [
 //   -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -32,6 +62,8 @@ let rooms = [-3, -2, -1, 0, 1, 2, 3]
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
+  textSize(24)
+  textAlign(CENTER, CENTER)
 
   item = new ReflectionObject(ROOM_X, ROOM_Y, 20, 20)
 }
@@ -52,29 +84,63 @@ function draw() {
   strokeWeight(4)
   stroke(0, 0, 0, 255)
 
-  drawingContext.setLineDash([10])
-  ln.draw()
+  if (
+    states[currentState].sightLineVisible &&
+    mouseY <= ROOM_Y + ROOM_H * 0.5
+  ) {
+    drawingContext.setLineDash([10])
+    ln.draw()
 
-  drawingContext.setLineDash([])
-  reflectionLines.forEach(ln => ln.draw())
+    drawingContext.setLineDash([])
+    reflectionLines.forEach(ln => ln.draw())
+  }
 
   drawEye()
+
+  text(states[currentState].prompt, width / 2, height - 20)
+  if (states[currentState].startButtonVisible) {
+    drawStartButton()
+  }
+}
+
+function drawStartButton() {
+  const x = width / 2
+  const y = height - 55
+  stroke(0)
+  fill(255)
+  rect(x, y, 100, 30)
+  fill(0)
+  noStroke()
+  // noFill()
+  text('Start', x, y)
 }
 
 function drawEye() {
-  const mousePosition = createVector(mouseX, mouseY)
-  const eyePosition = createVector(ROOM_X, ROOM_Y + ROOM_H / 2)
-  const eyeToMouse = p5.Vector.sub(mousePosition, eyePosition)
-  const eyeToMouseDirection = eyeToMouse.normalize()
-  const eyeToMouseDistance = eyePosition.dist(mousePosition)
-  let distancePercentage = eyeToMouseDistance / EYE_MAX_MOUSE_DISTANCE
-  distancePercentage = Math.min(distancePercentage, 1)
-  const pupilPosition = p5.Vector.add(
-    eyePosition,
-    eyeToMouseDirection.mult(
-      (EYE_BALL_SIZE / 2 - EYE_IRIS_SIZE / 2 - 4) * distancePercentage,
-    ),
-  )
+  let pupilPosition = states[currentState].pupilPosition
+
+  if (pupilPosition) {
+    pupilPosition = createVector(
+      ROOM_X + pupilPosition.x * (EYE_BALL_SIZE / 2 - EYE_IRIS_SIZE / 2 - 4),
+      ROOM_Y +
+        ROOM_H / 2 +
+        pupilPosition.y * (EYE_BALL_SIZE / 2 - EYE_IRIS_SIZE / 2 - 4),
+    )
+  } else {
+    const mousePosition = createVector(mouseX, mouseY)
+    const eyePosition = createVector(ROOM_X, ROOM_Y + ROOM_H / 2)
+    const eyeToMouse = p5.Vector.sub(mousePosition, eyePosition)
+    const eyeToMouseDirection = eyeToMouse.normalize()
+    const eyeToMouseDistance = eyePosition.dist(mousePosition)
+    let distancePercentage = eyeToMouseDistance / EYE_MAX_MOUSE_DISTANCE
+    distancePercentage = Math.min(distancePercentage, 1)
+
+    pupilPosition = p5.Vector.add(
+      eyePosition,
+      eyeToMouseDirection.mult(
+        (EYE_BALL_SIZE / 2 - EYE_IRIS_SIZE / 2 - 4) * distancePercentage,
+      ),
+    )
+  }
 
   stroke(0)
   fill(255)
@@ -89,8 +155,33 @@ function drawEye() {
   circle(pupilPosition.x, pupilPosition.y, EYE_PUPIL_SIZE)
 }
 
+function nextState() {
+  if (currentState < states.length - 1) currentState++
+}
+
+function clickStartButton() {
+  if (
+    states[currentState].startButtonVisible &&
+    mouseX >= START_BUTTON_X - START_BUTTON_W / 2 &&
+    mouseX <= START_BUTTON_X + START_BUTTON_W / 2 &&
+    mouseY >= START_BUTTON_Y - START_BUTTON_H / 2 &&
+    mouseY <= START_BUTTON_Y + START_BUTTON_H / 2
+  ) {
+    if (states[currentState].toGetToNextState === 'clickStartButton') {
+      nextState()
+    }
+  }
+}
+
+function triangleClicked() {
+  if (states[currentState].toGetToNextState === 'clickTriangle') {
+    nextState()
+  }
+}
+
 function mousePressed() {
   item.click()
+  clickStartButton()
 }
 
 function mouseReleased() {
@@ -117,6 +208,7 @@ function ReflectionObject(x, y, w, h) {
       this.dragging = true
       this.offsetX = this.x - mouseX
       this.offsetY = this.y - mouseY
+      triangleClicked()
     }
   }
 
