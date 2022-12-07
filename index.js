@@ -1,19 +1,26 @@
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
+let obj
 let mirrors
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
+  rectMode(CENTER)
+
+  obj = new DraggableObject(width * 0.5, height * 0.5, 50, 50)
+
   mirrors = [
-    new Line(width * 0.4, height * 0.25, width * 0.4, height * 0.75),
-    new Line(width * 0.6, height * 0.25, width * 0.6, height * 0.75),
+    // new Line(width * 0.4, height * 0.25, width * 0.4, height * 0.75),
+    // new Line(width * 0.6, height * 0.25, width * 0.6, height * 0.75),
   ]
 
   strokeWeight(4)
 }
 
 function draw() {
+  obj.update()
+
   background(100)
 
   const ln = new Line(width * 0.5, height * 0.5, mouseX, mouseY)
@@ -27,6 +34,55 @@ function draw() {
   reflectionLines.forEach(ln => ln.draw())
 
   mirrors.forEach(m => m.draw())
+
+  obj.draw()
+}
+
+function mousePressed() {
+  obj.click()
+}
+
+function mouseReleased() {
+  obj.unClick()
+}
+
+function DraggableObject(x, y, w, h) {
+  this.x = x
+  this.y = y
+  this.w = w
+  this.h = h
+
+  this.dragging = false
+  this.offsetX = 0
+  this.offsetY = 0
+
+  this.click = () => {
+    if (
+      mouseX > this.x - this.w / 2 &&
+      mouseX < this.x + this.w / 2 &&
+      mouseY > this.y - this.h / 2 &&
+      mouseY < this.y + this.h / 2
+    ) {
+      this.dragging = true
+      this.offsetX = this.x - mouseX
+      this.offsetY = this.y - mouseY
+    }
+  }
+
+  this.unClick = () => {
+    this.dragging = false
+  }
+
+  this.update = () => {
+    if (this.dragging) {
+      this.x = mouseX + this.offsetX
+      this.y = mouseY + this.offsetY
+    }
+  }
+
+  this.draw = () => {
+    rect(this.x, this.y, this.w, this.h)
+  }
 }
 
 function Line(startX, startY, endX, endY) {
