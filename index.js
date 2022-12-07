@@ -1,26 +1,36 @@
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
+const OBJECT_BOUNDARIES = {
+  left: CANVAS_WIDTH * 0.4,
+  right: CANVAS_WIDTH * 0.6,
+  top: CANVAS_HEIGHT * 0.1,
+  bottom: CANVAS_HEIGHT * 0.5,
+}
+
 let obj
 let mirrors
+let objs
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
 
-  obj = new DraggableObject(width * 0.5, height * 0.5, 50, 50)
-
   mirrors = [
-    // new Line(width * 0.4, height * 0.25, width * 0.4, height * 0.75),
-    // new Line(width * 0.6, height * 0.25, width * 0.6, height * 0.75),
+    // new Line(width * 0.4, height * 0.1, width * 0.4, height * 0.5),
+    new Line(width * 0.6, height * 0.1, width * 0.6, height * 0.5),
   ]
+
+  generateObjects(width * 0.5, height * 0.25, 50, 50, mirrors)
 
   strokeWeight(4)
 }
 
 function draw() {
-  obj.update()
+  objs.forEach(o => o.update())
 
+  stroke(0)
+  fill(255)
   background(100)
 
   const ln = new Line(width * 0.5, height * 0.5, mouseX, mouseY)
@@ -28,29 +38,37 @@ function draw() {
   const reflectionLines = getReflectionLines(ln, mirrors)
 
   drawingContext.setLineDash([10])
-  ln.draw()
+  // ln.draw()
 
   drawingContext.setLineDash([])
-  reflectionLines.forEach(ln => ln.draw())
+  // reflectionLines.forEach(ln => ln.draw())
 
   mirrors.forEach(m => m.draw())
 
-  obj.draw()
+  objs.forEach(o => o.draw())
+
+  stroke(0, 0, 0, 255 * 0.5)
+  fill(255, 255, 255, 255 * 0.5)
+  // reflectedObjects.forEach(o => o.draw())
 }
 
 function mousePressed() {
-  obj.click()
+  objs.forEach(o => o.click())
 }
 
 function mouseReleased() {
-  obj.unClick()
+  objs.forEach(o => o.unClick())
 }
 
-function DraggableObject(x, y, w, h) {
+function DraggableObject(x, y, w, h, left, right, top, bottom, isReversedX) {
   this.x = x
   this.y = y
   this.w = w
   this.h = h
+
+  this.boundaries = { left, right, top, bottom }
+
+  this.isReversedX = isReversedX
 
   this.dragging = false
   this.offsetX = 0
@@ -77,6 +95,27 @@ function DraggableObject(x, y, w, h) {
     if (this.dragging) {
       this.x = mouseX + this.offsetX
       this.y = mouseY + this.offsetY
+
+      if (this.boundaries.left && this.x - this.w / 2 < this.boundaries.left) {
+        this.x = this.boundaries.left + this.w / 2
+      }
+      if (
+        this.boundaries.right &&
+        this.x + this.w / 2 > this.boundaries.right
+      ) {
+        this.x = this.boundaries.right - this.w / 2
+      }
+      if (this.boundaries.top && this.y - this.h / 2 < this.boundaries.top) {
+        this.y = this.boundaries.top + this.h / 2
+      }
+      if (
+        this.boundaries.bottom &&
+        this.y + this.h / 2 > this.boundaries.bottom
+      ) {
+        this.y = this.boundaries.bottom - this.h / 2
+      }
+
+      updateOtherObjects(this)
     }
   }
 
@@ -100,6 +139,52 @@ function Line(startX, startY, endX, endY) {
   this.draw = () => {
     line(this.start.x, this.start.y, this.end.x, this.end.y)
   }
+}
+
+function updateOtherObjects(obj) {
+  objs.forEach(o => {
+    if (o !== obj) {
+      if (
+        (o.isReversedX && !obj.isReversedX) ||
+        (!o.isReversedX && obj.isReversedX)
+      ) {
+        o.x = o.boundaries.right - (obj.x - obj.boundaries.left)
+      } else {
+        o.x = o.boundaries.left + (obj.x - obj.boundaries.left)
+      }
+      o.y = obj.y
+    }
+  })
+}
+
+function generateObjects(x, y, w, h, mirrors) {
+  const obj = new DraggableObject(
+    x,
+    y,
+    w,
+    h,
+    OBJECT_BOUNDARIES.left,
+    OBJECT_BOUNDARIES.right,
+    OBJECT_BOUNDARIES.top,
+    OBJECT_BOUNDARIES.bottom,
+  )
+
+  objs = [obj]
+
+  const mirror = mirrors[0]
+  const obj2 = new DraggableObject(
+    mirror.start.x + (mirror.start.x - obj.x),
+    obj.y,
+    w,
+    h,
+    mirror.start.x,
+    mirror.start.x + (OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left),
+    OBJECT_BOUNDARIES.top,
+    OBJECT_BOUNDARIES.bottom,
+    true,
+  )
+
+  objs.push(obj2)
 }
 
 function getReflectionLines(sightLine, mirrors, ignoreMirror) {
