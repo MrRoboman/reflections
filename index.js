@@ -1,86 +1,100 @@
 const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 800
 
-const OBJECT_BOUNDARIES = {
-  left: CANVAS_WIDTH * 0.4,
-  right: CANVAS_WIDTH * 0.6,
-  top: CANVAS_HEIGHT * 0.1,
-  bottom: CANVAS_HEIGHT * 0.5,
+const ROOM_WIDTH = 100
+const ROOM_HEIGHT = 100
+
+let item
+// let rooms = [0]
+// let rooms = [0, 1]
+// let rooms = [-2, -1, 0, 1, 2]
+let rooms = [-3, -2, -1, 0, 1, 2, 3]
+
+function drawRooms() {
+  // Draw floors
+  for (let i = 0; i < rooms.length; i++) {
+    const roomIdx = rooms[i]
+    const centerX = width * 0.5
+    const centerY = height * 0.5
+    const roomX = centerX + roomIdx * ROOM_WIDTH
+    const roomY = centerY
+    noStroke()
+    fill(255, 0, 0)
+    rect(roomX, roomY, ROOM_WIDTH, ROOM_HEIGHT)
+    if (i < rooms.length - 1) {
+      stroke(0)
+      line(
+        roomX + ROOM_WIDTH / 2,
+        roomY - ROOM_HEIGHT / 2,
+        roomX + ROOM_WIDTH / 2,
+        roomY + ROOM_HEIGHT / 2,
+      )
+    }
+  }
+
+  // Draw mirrors
+  for (let i = 0; i < rooms.length; i++) {
+    const roomIdx = rooms[i]
+    const centerX = width * 0.5
+    const centerY = height * 0.5
+    const roomX = centerX + roomIdx * ROOM_WIDTH
+    const roomY = centerY
+    if (i < rooms.length - 1) {
+      stroke(0)
+      line(
+        roomX + ROOM_WIDTH / 2,
+        roomY - ROOM_HEIGHT / 2,
+        roomX + ROOM_WIDTH / 2,
+        roomY + ROOM_HEIGHT / 2,
+      )
+    }
+  }
 }
-
-const MAX_REFLECTIONS = 2
-
-let obj
-let mirrors
-let objs
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
 
-  mirrors = [
-    new Line(width * 0.4, height * 0.1, width * 0.4, height * 0.5),
-    new Line(width * 0.6, height * 0.1, width * 0.6, height * 0.5),
-  ]
-
-  generateObjects(width * 0.5, height * 0.25, 50, 50, mirrors)
-
-  strokeWeight(4)
+  item = new ReflectionObject(width * 0.5, height * 0.5, 10, 10)
 }
 
 function draw() {
-  objs.forEach(o => o.update())
+  item.update()
 
-  stroke(0)
-  fill(255)
   background(100)
 
-  const ln = new Line(width * 0.5, height * 0.5, mouseX, mouseY)
+  const ln = new Line(
+    width * 0.5,
+    height * 0.5 + ROOM_HEIGHT * 0.5,
+    mouseX,
+    mouseY,
+  )
 
-  const reflectionLines = getReflectionLines(ln, mirrors)
+  const reflectionLines = getReflectionLines(ln, getMirrors())
+
+  drawRooms()
+  item.draw()
 
   drawingContext.setLineDash([10])
-  // ln.draw()
+  ln.draw()
 
   drawingContext.setLineDash([])
-  // reflectionLines.forEach(ln => ln.draw())
-
-  mirrors.forEach(m => m.draw())
-
-  objs.forEach(o => o.draw())
-
-  stroke(0, 0, 0, 255 * 0.5)
-  fill(255, 255, 255, 255 * 0.5)
-  // reflectedObjects.forEach(o => o.draw())
+  reflectionLines.forEach(ln => ln.draw())
 }
 
 function mousePressed() {
-  objs.forEach(o => o.click())
+  item.click()
 }
 
 function mouseReleased() {
-  objs.forEach(o => o.unClick())
+  item.unClick()
 }
 
-function DraggableObject(
-  x,
-  y,
-  w,
-  h,
-  left,
-  right,
-  top,
-  bottom,
-  reflectionIndex = 0,
-) {
+function ReflectionObject(x, y, w, h) {
   this.x = x
   this.y = y
   this.w = w
   this.h = h
-
-  this.boundaries = { left, right, top, bottom }
-
-  this.reflectionIndex = reflectionIndex
 
   this.dragging = false
   this.offsetX = 0
@@ -105,34 +119,35 @@ function DraggableObject(
 
   this.update = () => {
     if (this.dragging) {
+      const centerRoomLeft = width / 2 - ROOM_WIDTH / 2
+      const centerRoomRight = width / 2 + ROOM_WIDTH / 2
+      const centerRoomTop = height / 2 - ROOM_HEIGHT / 2
+      const centerRoomBottom = height / 2 + ROOM_HEIGHT / 2
+
       this.x = mouseX + this.offsetX
       this.y = mouseY + this.offsetY
 
-      if (this.boundaries.left && this.x - this.w / 2 < this.boundaries.left) {
-        this.x = this.boundaries.left + this.w / 2
+      if (this.x - this.w / 2 < centerRoomLeft) {
+        this.x = centerRoomLeft + this.w / 2
       }
-      if (
-        this.boundaries.right &&
-        this.x + this.w / 2 > this.boundaries.right
-      ) {
-        this.x = this.boundaries.right - this.w / 2
+      if (this.x + this.w / 2 > centerRoomRight) {
+        this.x = centerRoomRight - this.w / 2
       }
-      if (this.boundaries.top && this.y - this.h / 2 < this.boundaries.top) {
-        this.y = this.boundaries.top + this.h / 2
+      if (this.y - this.h / 2 < centerRoomTop) {
+        this.y = centerRoomTop + this.h / 2
       }
-      if (
-        this.boundaries.bottom &&
-        this.y + this.h / 2 > this.boundaries.bottom
-      ) {
-        this.y = this.boundaries.bottom - this.h / 2
+      if (this.y + this.h / 2 > centerRoomBottom) {
+        this.y = centerRoomBottom - this.h / 2
       }
-
-      updateOtherObjects(this)
     }
   }
 
   this.draw = () => {
-    rect(this.x, this.y, this.w, this.h)
+    rooms.forEach(roomIdx => {
+      stroke(0)
+      fill(255)
+      rect(this.x + ROOM_WIDTH * roomIdx, this.y, this.w, this.h)
+    })
   }
 }
 
@@ -153,87 +168,30 @@ function Line(startX, startY, endX, endY) {
   }
 }
 
-function updateOtherObjects(obj) {
-  objs.forEach(o => {
-    if (o !== obj) {
-      const boundaryWidth = OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left
-      const oReversed = Math.abs(o.reflectionIndex) % 2 === 1
-      const objReversed = Math.abs(obj.reflectionIndex) % 2 === 1
-      const offset =
-        o.reflectionIndex > 0 ? o.reflectionIndex - 1 : o.reflectionIndex + 1
-      if ((oReversed && !objReversed) || (!oReversed && objReversed)) {
-        o.x =
-          o.boundaries.right -
-          (obj.x - obj.boundaries.left) +
-          boundaryWidth * offset
-      } else {
-        o.x =
-          o.boundaries.left +
-          (obj.x - obj.boundaries.left) +
-          boundaryWidth * offset
-      }
-      o.y = obj.y
-    }
-  })
-}
-
-function generateObjects(x, y, w, h, mirrors) {
-  const obj = new DraggableObject(
-    x,
-    y,
-    w,
-    h,
-    OBJECT_BOUNDARIES.left,
-    OBJECT_BOUNDARIES.right,
-    OBJECT_BOUNDARIES.top,
-    OBJECT_BOUNDARIES.bottom,
-  )
-
-  objs = [obj]
-
-  if (mirrors.length === 1) {
-    const mirror = mirrors[0]
-    const obj2 = new DraggableObject(
-      mirror.start.x + (mirror.start.x - obj.x),
-      obj.y,
-      w,
-      h,
-      mirror.start.x,
-      mirror.start.x + (OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left),
-      OBJECT_BOUNDARIES.top,
-      OBJECT_BOUNDARIES.bottom,
-      true,
+function getMirrors() {
+  let mirrors = []
+  if (rooms.includes(-1)) {
+    mirrors.push(
+      new Line(
+        width * 0.5 - ROOM_WIDTH / 2,
+        height * 0.5 - ROOM_HEIGHT / 2,
+        width * 0.5 - ROOM_WIDTH / 2,
+        height * 0.5 + ROOM_HEIGHT / 2,
+      ),
     )
-
-    objs.push(obj2)
+  }
+  if (rooms.includes(1)) {
+    mirrors.push(
+      new Line(
+        width * 0.5 + ROOM_WIDTH / 2,
+        height * 0.5 - ROOM_HEIGHT / 2,
+        width * 0.5 + ROOM_WIDTH / 2,
+        height * 0.5 + ROOM_HEIGHT / 2,
+      ),
+    )
   }
 
-  if (mirrors.length === 2) {
-    mirrors.forEach(mirror => {
-      const direction = mirror.start.x < obj.x ? -1 : 1
-      const boundaryWidth = OBJECT_BOUNDARIES.right - OBJECT_BOUNDARIES.left
-      let mirrorX = mirror.start.x
-
-      for (let i = 0; i < MAX_REFLECTIONS; i++) {
-        const left = OBJECT_BOUNDARIES.left + boundaryWidth * direction
-        const obj2 = new DraggableObject(
-          obj.x + boundaryWidth * direction * (i + 1),
-          obj.y,
-          w,
-          h,
-          left,
-          left + boundaryWidth,
-          OBJECT_BOUNDARIES.top,
-          OBJECT_BOUNDARIES.bottom,
-          (i + 1) * direction,
-        )
-
-        objs.push(obj2)
-
-        mirrorX += boundaryWidth * direction
-      }
-    })
-  }
+  return mirrors
 }
 
 function getReflectionLines(sightLine, mirrors, ignoreMirror) {
