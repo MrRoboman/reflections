@@ -24,10 +24,11 @@ const START_BUTTON_H = 30
 
 const LIGHT_FALLOFF = 0.75
 
-let currentState = 0
+let currentState = 1
 const states = [
   {
     prompt: "Let's learn about reflection!",
+    startButtonText: 'Start',
     startButtonVisible: true,
     sightLineVisible: false,
     pupilPosition: null,
@@ -35,22 +36,39 @@ const states = [
   },
   {
     prompt: 'Look at the triangle in the middle of the room.',
+    startButtonText: '',
     startButtonVisible: false,
     sightLineVisible: true,
     pupilPosition: null,
     toGetToNextState: 'clickTriangle',
   },
   {
-    prompt: 'Great! Light reflects off the triangle into the eye.',
-    startButtonVisible: false,
+    prompt: 'Great! Light reflects off the triangle into your eye.',
+    startButtonText: 'Next',
+    startButtonVisible: true,
     sightLineVisible: false,
     pupilPosition: { x: 0, y: -1 },
+    animatedLines: [
+      {
+        startX: ROOM_X,
+        startY: 165,
+        endX: ROOM_X,
+        endY: 270,
+        animation: {
+          duration: 0.5,
+          ease: 'power3.inOut',
+          repeat: -1,
+          repeatDelay: 0.5,
+        },
+      },
+    ],
     toGetToNextState: 'none',
   },
 ]
 
 let item
 let rooms = [0]
+let animatedLines = []
 // let rooms = [0, 1]
 // let rooms = [-2, -1, 0, 1, 2]
 // let rooms = [-3, -2, -1, 0, 1, 2, 3]
@@ -59,6 +77,8 @@ let rooms = [0]
 //   -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
 // ]
 
+let al
+
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
@@ -66,6 +86,8 @@ function setup() {
   textAlign(CENTER, CENTER)
 
   item = new ReflectionObject(ROOM_X, ROOM_Y, 20, 20)
+  al = new AnimatedLine(10, 10, width - 10, height - 10)
+  al.start()
 }
 
 function draw() {
@@ -101,6 +123,9 @@ function draw() {
   if (states[currentState].startButtonVisible) {
     drawStartButton()
   }
+
+  stroke(4)
+  animatedLines.forEach(ln => ln.draw())
 }
 
 function drawStartButton() {
@@ -112,7 +137,7 @@ function drawStartButton() {
   fill(0)
   noStroke()
   // noFill()
-  text('Start', x, y)
+  text(states[currentState].startButtonText, x, y)
 }
 
 function drawEye() {
@@ -157,6 +182,20 @@ function drawEye() {
 
 function nextState() {
   if (currentState < states.length - 1) currentState++
+  if (states[currentState].animatedLines) {
+    animatedLines = []
+    states[currentState].animatedLines.forEach(ln => {
+      const al = new AnimatedLine(
+        ln.startX,
+        ln.startY,
+        ln.endX,
+        ln.endY,
+        ln.animation,
+      )
+      al.start()
+      animatedLines.push(al)
+    })
+  }
 }
 
 function clickStartButton() {
@@ -180,6 +219,7 @@ function triangleClicked() {
 }
 
 function mousePressed() {
+  console.log(mouseX, mouseY)
   item.click()
   clickStartButton()
 }
@@ -271,6 +311,33 @@ function Line(startX, startY, endX, endY) {
 
   this.draw = () => {
     line(this.start.x, this.start.y, this.end.x, this.end.y)
+  }
+}
+
+function AnimatedLine(startX, startY, endX, endY, animation) {
+  this.line = new Line(startX, startY, endX, endY)
+  this.progress = 0
+  this.isPlaying = false
+
+  this.start = () => {
+    if (!this.isPlaying) {
+      this.progress = 0
+      this.isPlaying = true
+      gsap.to(this, {
+        progress: 1,
+        ...animation,
+      })
+    }
+  }
+
+  this.draw = () => {
+    const interpolatedPoint = this.line.interpolate(this.progress)
+    line(
+      this.line.start.x,
+      this.line.start.y,
+      interpolatedPoint.x,
+      interpolatedPoint.y,
+    )
   }
 }
 
