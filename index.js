@@ -7,8 +7,9 @@ const ROOM_HEIGHT = 100
 let item
 // let rooms = [0]
 // let rooms = [0, 1]
-// let rooms = [-2, -1, 0, 1, 2]
-let rooms = [-3, -2, -1, 0, 1, 2, 3]
+let rooms = [-2, -1, 0, 1, 2]
+// let rooms = [-3, -2, -1, 0, 1, 2, 3]
+// let rooms = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
 
 function drawRooms() {
   // Draw floors
@@ -146,7 +147,12 @@ function ReflectionObject(x, y, w, h) {
     rooms.forEach(roomIdx => {
       stroke(0)
       fill(255)
-      rect(this.x + ROOM_WIDTH * roomIdx, this.y, this.w, this.h)
+      const shouldReflectX = Math.abs(roomIdx) % 2 === 1
+      let x = this.x + ROOM_WIDTH * roomIdx
+      if (shouldReflectX) {
+        x += (width / 2 - this.x) * 2
+      }
+      rect(x, this.y, this.w, this.h)
     })
   }
 }
