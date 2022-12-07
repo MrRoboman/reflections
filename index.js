@@ -33,7 +33,7 @@ function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
 
-  item = new ReflectionObject(ROOM_X, ROOM_Y, 10, 10)
+  item = new ReflectionObject(ROOM_X, ROOM_Y, 20, 20)
 }
 
 function draw() {
@@ -154,7 +154,13 @@ function ReflectionObject(x, y, w, h) {
       if (shouldReflectX) {
         x += (width / 2 - this.x) * 2
       }
-      rect(x, this.y, this.w, this.h)
+      push()
+      translate(x, this.y)
+      if (shouldReflectX) {
+        scale(-1, 1)
+      }
+      triangle(-this.w / 2, 0, this.w / 2, -this.h / 2, this.w / 2, this.h / 2)
+      pop()
     })
   }
 }
