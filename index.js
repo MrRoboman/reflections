@@ -17,8 +17,11 @@ const EYE_PUPIL_SIZE = 6
 const EYE_COLOR = '#228b22'
 const EYE_MAX_MOUSE_DISTANCE = 100
 
+const PROMPT_X = CANVAS_WIDTH * 0.5
+const PROMPT_Y = CANVAS_HEIGHT - 62
+
 const START_BUTTON_X = CANVAS_WIDTH * 0.5
-const START_BUTTON_Y = CANVAS_HEIGHT - 20
+const START_BUTTON_Y = CANVAS_HEIGHT - 25
 const START_BUTTON_W = 150
 const START_BUTTON_H = 30
 
@@ -112,8 +115,6 @@ const states = [
         animation: {
           duration: 0.5,
           ease: 'power3.inOut',
-          repeat: -1,
-          repeatDelay: 1,
         },
         style: 'dashed',
       },
@@ -125,8 +126,6 @@ const states = [
         animation: {
           duration: 0.5,
           ease: 'power3.inOut',
-          repeat: -1,
-          repeatDelay: 1,
         },
       },
       {
@@ -138,8 +137,6 @@ const states = [
           delay: 0.5,
           duration: 0.5,
           ease: 'power3.inOut',
-          repeat: -1,
-          repeatDelay: 1,
         },
       },
     ],
@@ -277,13 +274,6 @@ const states = [
     trianglePosition: { x: ROOM_X, y: ROOM_Y },
   },
   // 9
-  //   {startX: 475, startY: 181.3274336283186, endX: 417.5, endY: 151}
-
-  // index.js:554 {startX: 400, startY: 300, endX: 325, endY: 260.17699115044246}
-
-  // index.js:554 {startX: 325, startY: 260.17699115044246, endX: 475, endY: 180.53097345132744}
-
-  // index.js:554 {startX: 475, startY: 180.53097345132744, endX: 417.5, endY: 150}
   {
     animatedLines: [
       {
@@ -346,7 +336,7 @@ const states = [
     clickRects: null,
     rooms: [-3, -2, -1, 0, 1, 2, 3],
     prompt: 'Why does the image appear to alternate directions?',
-    pupilPosition: null,
+    pupilPosition: { x: -0.8, y: -0.6 },
     sightLineVisible: false,
     startButtonText: 'Start over',
     startButtonVisible: true,
@@ -385,7 +375,7 @@ function draw() {
   strokeWeight(2)
   item.update()
 
-  background(100)
+  background('#cdf4fd')
 
   ln = new Line(ROOM_X, ROOM_Y + ROOM_H * 0.5, mouseX, mouseY)
 
@@ -410,7 +400,8 @@ function draw() {
 
   drawEye()
 
-  text(states[currentState].prompt, width / 2, height - 55)
+  text(states[currentState].prompt, PROMPT_X, PROMPT_Y)
+
   if (states[currentState].startButtonVisible) {
     drawStartButton()
   }
@@ -498,6 +489,15 @@ function nextState() {
     al.start()
     animatedLines.push(al)
   })
+
+  if (currentState === 4) {
+    const loopAnim = () => {
+      animatedLines.forEach(ln => ln.start())
+      console.log('loop')
+      if (currentState === 4) setTimeout(loopAnim, 1500)
+    }
+    setTimeout(loopAnim, 1500)
+  }
 
   if (currentState === 9) {
     const loopAnim = () => {
@@ -751,7 +751,7 @@ function drawRooms() {
     const roomX = ROOM_X + ROOM_W * roomIdx
 
     noStroke()
-    fill(255, 0, 0, getAlpha(roomIdx))
+    fill(230, 0, 0, getAlpha(roomIdx))
 
     rect(roomX, ROOM_Y, ROOM_W, ROOM_H)
 
