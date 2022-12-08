@@ -1,0 +1,32 @@
+const CANVAS_WIDTH = 800
+const CANVAS_HEIGHT = 400
+
+const BACKGROUND_COLOR = '#cdf4fd'
+
+const ROOM_W = 150
+const ROOM_H = 300
+const ROOM_X = CANVAS_WIDTH * 0.5
+const ROOM_Y = ROOM_H * 0.5
+
+const ROOM_LEFT = ROOM_X - ROOM_W * 0.5
+const ROOM_RIGHT = ROOM_X + ROOM_W * 0.5
+const ROOM_TOP = ROOM_Y - ROOM_H * 0.5
+const ROOM_BOTTOM = ROOM_Y + ROOM_H * 0.5
+
+const EYE_BALL_SIZE = 40
+const EYE_IRIS_SIZE = 16
+const EYE_PUPIL_SIZE = 6
+const EYE_COLOR = '#228b22'
+const EYE_MAX_MOUSE_DISTANCE = 100
+
+const PROMPT_X = CANVAS_WIDTH * 0.5
+const PROMPT_Y = CANVAS_HEIGHT - 62
+
+const BUTTON_X = CANVAS_WIDTH * 0.5
+const BUTTON_Y = CANVAS_HEIGHT - 25
+const BUTTON_W = 150
+const BUTTON_H = 30
+
+const TRIANGLE_SIZE = 20
+
+const LIGHT_FALLOFF = 0.75
