@@ -29,7 +29,7 @@ const TRIANGLE_SIZE = 20
 
 const LIGHT_FALLOFF = 0.75
 
-let currentState = 7
+let currentState = 0
 const states = [
   // 0
   {
@@ -154,13 +154,26 @@ const states = [
     trianglePosition: null,
   },
   // 5
+  // {startX: 400, startY: 300, endX: 475, endY: 263.8211382113821}
+  // {startX: 475, startY: 263.8211382113821, endX: 365.5, endY: 211}
   {
     animatedLines: [
       {
-        startX: 485,
-        startY: 15,
+        startX: 365.5,
+        startY: 211,
         endX: 475,
-        endY: 40,
+        endY: 263.8,
+        animation: {
+          duration: 0.1,
+          ease: 'power3.inOut',
+        },
+        // style: 'dashed',
+      },
+      {
+        startX: ROOM_X + ROOM_W * 1.5 - (365.5 - (ROOM_X - ROOM_W * 0.5)),
+        startY: 211,
+        endX: 475,
+        endY: 263.8,
         animation: {
           duration: 0.1,
           ease: 'power3.inOut',
@@ -168,20 +181,10 @@ const states = [
         style: 'dashed',
       },
       {
-        startX: 460,
-        startY: 15,
-        endX: 475,
-        endY: 40,
-        animation: {
-          duration: 0.1,
-          ease: 'power3.inOut',
-        },
-      },
-      {
         startX: 475,
-        startY: 40,
-        endX: 410,
-        endY: 270,
+        startY: 263.8,
+        endX: 430,
+        endY: 286,
         animation: {
           duration: 0.1,
           ease: 'power3.inOut',
@@ -193,11 +196,11 @@ const states = [
     rooms: [0, 1],
     prompt:
       "Make the eye look at the triangle's reflection by moving the triangle",
-    pupilPosition: { x: 0.4, y: -0.9 },
+    pupilPosition: { x: 0.9, y: -0.45 },
     sightLineVisible: false,
     startButtonText: '',
     startButtonVisible: false,
-    target: { x: 450, y: 25 },
+    target: { x: 360, y: 208 },
     toGetToNextState: 'triangleOnTarget',
     trianglePosition: null,
   },
