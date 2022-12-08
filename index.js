@@ -22,14 +22,17 @@ const START_BUTTON_Y = CANVAS_HEIGHT - 20
 const START_BUTTON_W = 150
 const START_BUTTON_H = 30
 
+const TRIANGLE_SIZE = 20
+
 const LIGHT_FALLOFF = 0.75
 
-let currentState = 5
+let currentState = 7
 const states = [
   // 0
   {
     animatedLines: [],
     canMoveTriangle: false,
+    clickRects: null,
     prompt: "Let's learn about light!",
     pupilPosition: null,
     rooms: [0],
@@ -38,11 +41,13 @@ const states = [
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
   // 1
   {
     animatedLines: [],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [0],
     prompt: 'Look at the triangle in the middle of the room.',
     pupilPosition: null,
@@ -51,6 +56,7 @@ const states = [
     startButtonVisible: false,
     target: null,
     toGetToNextState: 'clickTriangle',
+    trianglePosition: null,
   },
   // 2
   {
@@ -69,27 +75,31 @@ const states = [
       },
     ],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [0],
     prompt: 'Great! Light reflects off the triangle into your eye.',
     pupilPosition: { x: 0, y: -1 },
     sightLineVisible: false,
-    startButtonText: 'Next',
+    startButtonText: 'Add mirror',
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
   // 3
   {
     animatedLines: [],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [0, 1],
-    prompt: "A mirror! Look at the triangle's reflection.",
+    prompt: "Look at the triangle's reflection.",
     pupilPosition: null,
     sightLineVisible: true,
     startButtonText: '',
     startButtonVisible: false,
     target: null,
     toGetToNextState: 'clickTriangleReflection',
+    trianglePosition: null,
   },
   // 4
   {
@@ -134,6 +144,7 @@ const states = [
       },
     ],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [0, 1],
     prompt:
       'Nice! What do you notice about the angles of the reflecting light?',
@@ -143,25 +154,61 @@ const states = [
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
   // 5
   {
-    animatedLines: [],
+    animatedLines: [
+      {
+        startX: 485,
+        startY: 15,
+        endX: 475,
+        endY: 40,
+        animation: {
+          duration: 0.1,
+          ease: 'power3.inOut',
+        },
+        style: 'dashed',
+      },
+      {
+        startX: 460,
+        startY: 15,
+        endX: 475,
+        endY: 40,
+        animation: {
+          duration: 0.1,
+          ease: 'power3.inOut',
+        },
+      },
+      {
+        startX: 475,
+        startY: 40,
+        endX: 410,
+        endY: 270,
+        animation: {
+          duration: 0.1,
+          ease: 'power3.inOut',
+        },
+      },
+    ],
     canMoveTriangle: true,
+    clickRects: null,
     rooms: [0, 1],
     prompt:
       "Make the eye look at the triangle's reflection by moving the triangle",
-    pupilPosition: null,
+    pupilPosition: { x: 0.4, y: -0.9 },
     sightLineVisible: false,
     startButtonText: '',
     startButtonVisible: false,
     target: { x: 450, y: 25 },
     toGetToNextState: 'triangleOnTarget',
+    trianglePosition: null,
   },
   // 6
   {
     animatedLines: [],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [0, 1],
     prompt:
       "What's relationship between the triangle's position and it's reflection?",
@@ -171,11 +218,26 @@ const states = [
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
   // 7
   {
     animatedLines: [],
     canMoveTriangle: true,
+    clickRects: [
+      {
+        x: 95,
+        y: 175,
+        width: TRIANGLE_SIZE,
+        height: TRIANGLE_SIZE,
+      },
+      {
+        x: 695,
+        y: 175,
+        width: TRIANGLE_SIZE,
+        height: TRIANGLE_SIZE,
+      },
+    ],
     rooms: [-3, -2, -1, 0, 1, 2, 3],
     prompt: 'Two mirrors gives the impression of infinity.',
     pupilPosition: null,
@@ -184,32 +246,113 @@ const states = [
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
   // 8
   {
     animatedLines: [],
     canMoveTriangle: false,
+    clickRects: [
+      {
+        x: 100,
+        y: 150,
+        w: TRIANGLE_SIZE,
+        h: TRIANGLE_SIZE,
+      },
+      // {
+      //   x: 700,
+      //   y: 150,
+      //   w: TRIANGLE_SIZE,
+      //   h: TRIANGLE_SIZE,
+      // },
+    ],
     rooms: [-3, -2, -1, 0, 1, 2, 3],
-    prompt: 'Have the eye look at a triangle two reflections away.',
+    prompt: 'Have the eye look at the triangle two reflections to the left.',
     pupilPosition: null,
     sightLineVisible: true,
-    startButtonText: 'Next',
-    startButtonVisible: true,
+    startButtonText: '',
+    startButtonVisible: false,
     target: null,
-    toGetToNextState: 'clickStartButton',
+    toGetToNextState: 'clickClickRect',
+    trianglePosition: { x: ROOM_X, y: ROOM_Y },
   },
   // 9
+  //   {startX: 475, startY: 181.3274336283186, endX: 417.5, endY: 151}
+
+  // index.js:554 {startX: 400, startY: 300, endX: 325, endY: 260.17699115044246}
+
+  // index.js:554 {startX: 325, startY: 260.17699115044246, endX: 475, endY: 180.53097345132744}
+
+  // index.js:554 {startX: 475, startY: 180.53097345132744, endX: 417.5, endY: 150}
   {
-    animatedLines: [],
+    animatedLines: [
+      {
+        startX: 419.5,
+        startY: 151.3,
+        endX: 475,
+        endY: 180.5,
+        animation: {
+          duration: 0.75,
+          ease: 'power3.inOut',
+        },
+      },
+      {
+        startX: 419.5 - ROOM_W * 2,
+        startY: 151.3,
+        endX: 475 - ROOM_W * 2,
+        endY: 180.5,
+        animation: {
+          duration: 0.75,
+          ease: 'power3.inOut',
+        },
+        style: 'dashed',
+      },
+      {
+        startX: 475,
+        startY: 180.5,
+        endX: 325,
+        endY: 260.2,
+        animation: {
+          delay: 0.75,
+          duration: 0.75,
+          ease: 'power3.inOut',
+        },
+      },
+      {
+        startX: 475 - ROOM_W * 2,
+        startY: 180.5,
+        endX: 325,
+        endY: 260.2,
+        animation: {
+          delay: 0.75,
+          duration: 0.75,
+          ease: 'power3.inOut',
+        },
+        style: 'dashed',
+      },
+      {
+        startX: 325,
+        startY: 260.2,
+        endX: 372.5,
+        endY: 285,
+        animation: {
+          delay: 1.5,
+          duration: 0.75,
+          ease: 'power3.inOut',
+        },
+      },
+    ],
     canMoveTriangle: false,
+    clickRects: null,
     rooms: [-3, -2, -1, 0, 1, 2, 3],
-    prompt: 'How does the light reflect?',
+    prompt: 'Why does the image appear to alternate directions?',
     pupilPosition: null,
-    sightLineVisible: true,
-    startButtonText: 'Next',
+    sightLineVisible: false,
+    startButtonText: 'Start over',
     startButtonVisible: true,
     target: null,
     toGetToNextState: 'clickStartButton',
+    trianglePosition: null,
   },
 ]
 
@@ -225,6 +368,7 @@ let animatedLines = []
 // ]
 
 let al
+let ln
 
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
@@ -243,7 +387,7 @@ function draw() {
 
   background(100)
 
-  const ln = new Line(ROOM_X, ROOM_Y + ROOM_H * 0.5, mouseX, mouseY)
+  ln = new Line(ROOM_X, ROOM_Y + ROOM_H * 0.5, mouseX, mouseY)
 
   const reflectionLines = getReflectionLines(ln, getMirrors())
 
@@ -328,24 +472,40 @@ function drawEye() {
 function nextState() {
   if (currentState < states.length - 1) {
     currentState++
+  } else {
+    currentState = 0
+  }
 
-    item.dragging = false
+  item.dragging = false
+  if (states[currentState].trianglePosition) {
+    const { x, y } = states[currentState].trianglePosition
+    item.x = x
+    item.y = y
+  }
 
-    rooms = states[currentState].rooms
+  rooms = states[currentState].rooms
 
-    animatedLines = []
-    states[currentState].animatedLines.forEach(ln => {
-      const al = new AnimatedLine(
-        ln.startX,
-        ln.startY,
-        ln.endX,
-        ln.endY,
-        ln.animation,
-        ln.style,
-      )
-      al.start()
-      animatedLines.push(al)
-    })
+  animatedLines = []
+  states[currentState].animatedLines.forEach(ln => {
+    const al = new AnimatedLine(
+      ln.startX,
+      ln.startY,
+      ln.endX,
+      ln.endY,
+      ln.animation,
+      ln.style,
+    )
+    al.start()
+    animatedLines.push(al)
+  })
+
+  if (currentState === 9) {
+    const loopAnim = () => {
+      animatedLines.forEach(ln => ln.start())
+      console.log('loop')
+      if (currentState === 9) setTimeout(loopAnim, 2750)
+    }
+    setTimeout(loopAnim, 2750)
   }
 }
 
@@ -381,10 +541,37 @@ function triangleOnTarget() {
   }
 }
 
+function clickClickRect() {
+  if (states[currentState].toGetToNextState === 'clickClickRect') {
+    console.log(currentState)
+    states[currentState].clickRects.forEach(rect => {
+      if (
+        mouseX >= rect.x - rect.w / 2 &&
+        mouseX <= rect.x + rect.w / 2 &&
+        mouseY >= rect.y - rect.h / 2 &&
+        mouseY <= rect.y + rect.h / 2
+      ) {
+        nextState()
+      }
+    })
+  }
+}
+
 function mousePressed() {
-  console.log(mouseX, mouseY)
+  // console.log(mouseX, mouseY)
+  const refLines = getReflectionLines(ln, getMirrors())
+  refLines.forEach(ln => {
+    console.log('-------')
+    console.log({
+      startX: ln.start.x,
+      startY: ln.start.y,
+      endX: ln.end.x,
+      endY: ln.end.y,
+    })
+  })
   item.click()
   clickStartButton()
+  clickClickRect()
 }
 
 function mouseReleased() {
@@ -505,24 +692,32 @@ function Line(startX, startY, endX, endY) {
   }
 }
 
-function AnimatedLine(startX, startY, endX, endY, animation, style = 'solid') {
+function AnimatedLine(
+  startX,
+  startY,
+  endX,
+  endY,
+  animation,
+  style = 'solid',
+  timeline = null,
+) {
   this.line = new Line(startX, startY, endX, endY)
   this.style = style
   this.progress = 0
   this.isPlaying = false
 
   this.start = () => {
-    if (!this.isPlaying) {
-      this.progress = 0
-      this.isPlaying = true
-      gsap.to(this, {
-        progress: 1,
-        onComplete: () => {
-          this.stop()
-        },
-        ...animation,
-      })
-    }
+    // if (!this.isPlaying) {
+    this.progress = 0
+    this.isPlaying = true
+    gsap.to(this, {
+      progress: 1,
+      onComplete: () => {
+        // this.stop()
+      },
+      ...animation,
+    })
+    // }
   }
 
   this.stop = () => {
