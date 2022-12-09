@@ -178,8 +178,7 @@ const states = [
     canMoveTriangle: false,
     clickRects: null,
     rooms: [0, 1],
-    prompt:
-      "What's relationship between the triangle's position and it's reflection?",
+    prompt: 'What will happen if we add a second mirror?',
     pupilPosition: null,
     sightLineVisible: false,
     startButtonText: 'Add mirror',
@@ -207,7 +206,8 @@ const states = [
       },
     ],
     rooms: [-3, -2, -1, 0, 1, 2, 3],
-    prompt: 'Two mirrors gives the impression of infinity.',
+    prompt:
+      'Two mirrors gives the impression of infinity. Move the triangle to see how its reflections move.',
     pupilPosition: null,
     sightLineVisible: false,
     startButtonText: 'Next',
@@ -306,7 +306,8 @@ const states = [
     canMoveTriangle: false,
     clickRects: null,
     rooms: [-3, -2, -1, 0, 1, 2, 3],
-    prompt: 'Why does the image appear to alternate directions?',
+    prompt:
+      'The triangle appears to be straight ahead, but we are seeing light reflect multiple times.',
     pupilPosition: { x: -0.8, y: -0.6 },
     sightLineVisible: false,
     startButtonText: 'Start over',

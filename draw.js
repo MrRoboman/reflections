@@ -77,7 +77,9 @@ function drawRooms() {
     const roomX = ROOM_X + ROOM_W * roomIdx
 
     if (i < rooms.length - 1) {
-      stroke(0)
+      const mirrorIdx = Math.abs(roomIdx < 0 ? roomIdx + 1 : roomIdx)
+      const greyValue = mirrorIdx * 60
+      stroke(greyValue)
       line(
         roomX + ROOM_W / 2,
         ROOM_Y - ROOM_H / 2,

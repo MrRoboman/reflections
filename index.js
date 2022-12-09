@@ -8,7 +8,7 @@ let animatedLines = []
 function setup() {
   createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT)
   rectMode(CENTER)
-  textSize(24)
+  textSize(TEXT_SIZE)
   textAlign(CENTER, CENTER)
 
   tri = new Triangle(ROOM_X, ROOM_Y, 20, 20)

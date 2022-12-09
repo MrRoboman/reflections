@@ -2,6 +2,7 @@ const CANVAS_WIDTH = 800
 const CANVAS_HEIGHT = 400
 
 const BACKGROUND_COLOR = '#cdf4fd'
+const TEXT_SIZE = 18
 
 const ROOM_W = 150
 const ROOM_H = 300
